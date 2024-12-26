@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Project Valeria.ipynb
-
+"""
 Project Valeria (Algo Trading Bot)
 
-Updates:
-- unusual daily volume activity for any stock
+WIP:
+-
 """
 import yfinance as yf
 import numpy as np
@@ -17,36 +16,16 @@ from data_pre_processor import data_pre_processor
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 50)
 
-"""`Apple` Stock Info
-*History* of AAPL  for the last 2 years || 2 years ago was the last stock split
-
-- to allow 30 years of data analysis, adjust all stock data for stock splits
-
-Note: Some months above have continuous days of large orders in the same week.
-"""
-
-#pre-processing for AI models
-
-"""STATIC Fx's"""
-
-# Find days where volume is higher than TARGET_PERCENTILE ( 87m shares )
-def findDaysOfHighVolume_ARR(X, Y, target_percentile):
-  arr = list()
-  for x,y in zip(X, Y):
-    if (y >= target_percentile):
-      arr.append([x,y])
-  return arr
-
 """MAIN FX's"""
 
 # Goal: Prep and Clean the dataset
 def buildStockDataframe() -> pd.DataFrame:
   stock = stock_data('nvda')
 
-  # History must be...
   # ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
-  stock.getHistory(period='2y', interval='1d')
+  stock.getHistory(period='10y', interval='1d')
   stock.removeTime()
+
 
   stock.movingAverages()
   stock.calcVolumePercentilesFromHist()
@@ -54,6 +33,10 @@ def buildStockDataframe() -> pd.DataFrame:
 
   #cleaner must be used after stock attributes have been configured
   data = data_pre_processor(stock.history, stock)
+  
+  # build ranking series
+  data.create_Price_Movement_Ranking()
+  data.create_Volume_Ranking()
   data.clean()
 
   # cleaner.reOrder()
@@ -82,27 +65,11 @@ def buildStockDataframe() -> pd.DataFrame:
 
 def main2():
   dataframe = buildStockDataframe()
-  # dataset
-
-
-  #trim last 10 days during cleaning and before training
-
-
-  #Split the dataset into train and test sets
-
-  #Fit the data into the model
-  # from sklearn.tree import DecisionTreeClassifier
-
-  # clf = DecisionTreeClassifier().
-
-  # shows last 10 removed
-  # dataset
 
   from tensorflow.keras.models import Sequential
   from tensorflow.keras.layers import LSTM, Dense
   from sklearn.metrics import mean_squared_error, mean_absolute_error
   from tensorflow.keras.optimizers import RMSprop
-
 
   # Train-test split
   train_df = dataframe.iloc[:int(len(dataframe) * 0.8)]
@@ -227,16 +194,13 @@ def main2():
 
 
 
-main2()
+# main2()
+buildStockDataframe()
 
 """Good News: The data is auto adjusted by yahoo to account for stock splits no work necessary and you can train on as much data as I please!
 
-
 # Test - shows rel. days.
-# findDaysOfHighVolume_ARR(aapl_date_vol_df['Date'], aapl_date_vol_df['Volume'], stock_AT_80_percentile)
 
-"""
-"""
 **Libraries**
 - yfinance - provides stock price history | Open Close High Low Volume Stock_Splits
 - datetime - standard datetime obj.
@@ -244,3 +208,15 @@ main2()
 - math - cleaning numerics | ceil
 tensorflow - training LSTM
 """
+def main3():
+  # Find days where volume is higher than TARGET_PERCENTILE ( 87m shares )
+  def findDaysOfHighVolume_ARR(date, volume, target_percentile):
+    arr = list()
+    for x,y in zip(date, volume):
+      if (y >= target_percentile):
+        arr.append([x,y])
+    return arr
+  
+  stock = stock_data("AAPL")
+  stock.getHistory('10y', '1d')
+  print(findDaysOfHighVolume_ARR(aapl_date_vol_df['Date'], aapl_date_vol_df['Volume'], stock_AT_80_percentile))

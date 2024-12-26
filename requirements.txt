@@ -1,4 +1,5 @@
 yfinance
+math
 requests
 numpy
 pandas

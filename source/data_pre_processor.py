@@ -1,37 +1,36 @@
 import pandas as pd
 
 class data_pre_processor:
-  def __init__(self, data: pd.DataFrame , stock):
+  def __init__(self, data: pd.DataFrame, stock):
     self.data = data
     self.stock = stock
 
   def display_info(self):
     print(self.data)
 
-  def clean(self):
+  def create_Volume_Ranking(self):
+    # stock percentiles or 'low' make out of 0 - 4
+    def rankingVolume(a, ranking):
+        if a <= ranking['70']:
+          return 0
+        elif a > ranking['70'] and a <= ranking['80']:
+          return 1
+        elif a > ranking['80'] and a <= ranking['90']:
+          return 2
+        elif a >= ranking['90']:
+          return 3
+        else:
+          print('Something is off w/ the volume')
+          return -1
+    
     dataframe = self.data
     stock = self.stock
 
-    #all yf data already adjusted for splits
-    dataframe = dataframe.drop(columns=['Stock Splits', 'Dividends'], axis=1)
-
-    # stock percentiles or 'low' make out of 0 - 4
-    def rankingVolume(a, ranking):
-      if a <= ranking['70']:
-        return 0
-      elif a > ranking['70'] and a <= ranking['80']:
-        return 1
-      elif a > ranking['80'] and a <= ranking['90']:
-        return 2
-      elif a >= ranking['90']:
-        return 3
-      else:
-        print('Something is off w/ the volume')
-        return -1
-
     # Adds volume ranking to df
     dataframe['Volume_Ranking'] = dataframe['Volume'].apply(lambda x: rankingVolume(x, stock.vol_percentiles))
+    # self.data = dataframe
 
+  def create_Price_Movement_Ranking(self):
     def priceMovement(row):
       low = row['Low']
       high = row['High']
@@ -43,8 +42,26 @@ class data_pre_processor:
       else:
         return (high - low) * -1
 
-    #Price change from open to close
+    dataframe = self.data
     dataframe['Price_Movement'] = dataframe.apply(priceMovement, axis=1)
+    # self.data = dataframe
+
+
+  def clean(self) -> None:
+    dataframe = self.data
+    stock = self.stock
+
+    #all yf data already adjusted for splits
+    dataframe = dataframe.drop(columns=['Stock Splits', 'Dividends'], axis=1)
+    
+    create_Price_Movement_Ranking()
+
+    create_Volume_Ranking()
+    
+
+   
+   
+    #Price change from open to close
 
     #add a day column for an iterator called days
     dataframe['Day'] = range(1, len(dataframe)+1)
